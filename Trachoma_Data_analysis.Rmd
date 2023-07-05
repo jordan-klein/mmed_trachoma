@@ -1,0 +1,86 @@
+---
+title: "Trachoma Data Cleaning"
+author: "Anita Makori"
+date: "2023-07-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## load packages
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+## read data
+trachoma_study_data <- read_csv("trachoma_sero_transmission_analysis_study.csv")
+trachoma_indiv_data <- read_csv("trachoma_sero_transmission_analysis_indiv.csv")
+trachoma_cluster_data <- read_csv("trachoma_sero_transmission_analysis_cluster.csv")
+
+## wrangle data
+trachoma_study_data1 <- trachoma_study_data%>%
+  separate(location_name, into = c("Location","Country"), sep=", ")%>%
+  filter(Country%in%c("Ethiopia","Ethiopia (TAITU)","Ethiopia (WUHA)"))
+
+trachoma_indiv_data1 <- trachoma_indiv_data%>%
+  separate(location_name, into = c("Location","Country"), sep=", ")%>%
+  filter(Country%in%c("Ethiopia","Ethiopia (TAITU)","Ethiopia (WUHA)"))
+
+waghemra_indiv_data <- trachoma_indiv_data1%>%
+  filter(Location%in%"Wag Hemra")
+
+trachoma_cluster_data1 <- trachoma_cluster_data%>%
+  separate(location_year_name, into = c("Location","CountryYear"), sep=", ")%>%
+  separate(CountryYear, into = c("Country","Year"), sep = " ")%>%
+  filter(Country%in%c("Ethiopia"))
+
+age_plot <- ggplot(waghemra_indiv_data)+
+  geom_bar(aes(x=age_months))+
+  theme_bw()
+
+age_ab_data <- waghemra_indiv_data%>%
+  group_by(age_years,pgp3_pos)%>%
+  count()%>%
+  ungroup()%>%
+  group_by(age_years)%>%
+  mutate(prop=round(n/sum(n)*100))%>%
+  filter(pgp3_pos==1)
+
+age_ab_plot <- ggplot(age_ab_data)+
+  geom_col(aes(x=age_years, y=prop))+
+  theme_bw()+ylim(0,100)+xlim(0,10)+
+  labs(x="Age", y="Proportion", title="Age distribution of Antibody responses")
+
+age_tf_data <- waghemra_indiv_data%>%
+  group_by(age_years,tf)%>%
+  count()%>%
+  ungroup()%>%
+  group_by(age_years)%>%
+  mutate(prop=round(n/sum(n)*100))%>%
+  filter(tf==1)
+
+age_tf_plot <- ggplot(age_tf_data)+
+  geom_col(aes(x=age_years, y=prop))+
+  theme_bw()+ylim(0,100)+xlim(0,10)+
+  labs(x="Age", y="Proportion", title="Age distribution of clinical disease markers (TF)")
+
+
+age_pcr_data <- waghemra_indiv_data%>%
+  group_by(age_years,pcr)%>%
+  count()%>%
+  ungroup()%>%
+  group_by(age_years)%>%
+  mutate(prop=round(n/sum(n)*100))%>%
+  filter(pcr==1)
+
+age_pcr_plot <- ggplot(age_pcr_data)+
+  geom_col(aes(x=age_years, y=prop))+
+  theme_bw()+ylim(0,100)+xlim(0,10)+
+  labs(x="Age", y="Proportion", title="Age distribution of PCR results")
+
+plots <- gridExtra::grid.arrange(age_tf_plot, age_pcr_plot, age_ab_plot, nrow=1)
+
+```
+
