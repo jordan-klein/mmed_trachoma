@@ -24,18 +24,18 @@ library(stringr)
 siid <- function(t, y, parms){
   with(c(as.list(y), parms),{
     
-    N <- S1 + Ip1 + It1 + D1
+    N <- S1 + Ip1 + It1 + D1 + Si + Ipi + Iti + Di
     lambda <- beta*(Ip1 + It1 + Ipi + Iti)/N
     
-    dS1dt <- b - (lambda + mu)*S1
-    dIp1dt <- lambda*S1 - (alpha + mu)*Ip1
-    dIt1dt <- alpha*Ip1 - (gamma1 + mu)*It1
-    dD1dt <- gamma1*It1 - (omega1 + (lambda*sigma) + mu)*D1
+    dS1dt <- b - (lambda + mu + theta)*S1
+    dIp1dt <- lambda*S1 - (alpha + mu + theta)*Ip1
+    dIt1dt <- alpha*Ip1 - (gamma1 + mu + theta)*It1
+    dD1dt <- gamma1*It1 - (omega1 + lambda*sigma + mu + theta)*D1
     
-    dSidt <- (omega1 + omegai)*D1 - (lambda + mu)*Si
-    dIpidt <- lambda*Si - (alpha + mu)*Ipi
-    dItidt <- (alpha*Ipi) + ((lambda*sigma)*D1) + ((lambda*sigma)*Di) - (gammai + mu)*Iti 
-    dDidt <- gammai*Iti - (omegai + mu + (lambda*sigma)*Di)
+    dSidt <- omega1*D1 + omegai*Di - (lambda + mu + theta)*Si
+    dIpidt <- lambda*Si - (alpha + mu + theta)*Ipi
+    dItidt <- alpha*Ipi + (lambda*sigma)*D1 + (lambda*sigma)*Di - (gammai + mu + theta)*Iti 
+    dDidt <- gammai*Iti - (omegai + mu + theta + lambda*sigma)*Di
     
     list(c(dS1dt, dIp1dt, dIt1dt, dD1dt, 
            dSidt, dIpidt, dItidt, dDidt))
@@ -85,10 +85,12 @@ values <- c(b = 37.4,
             omega1 = omega[1], 
             gamma1 = gamma[1], 
             omegai = mean(omega), 
-            gammai = mean(gamma))
+            gammai = mean(gamma), 
+            theta = (1/10)/365 # ageing out
+              )
 
 #### Time
-time.out <- seq(0, 365*10, 1)
+time.out <- seq(0, 365*5, 1)
 
 #### Population
 N0 <- 100000 
@@ -116,9 +118,19 @@ ts.long <- melt(ts, id.vars = 'time') %>%
          repeat_infection = case_when(grepl("1", variable) ~ "Naive", 
                                       grepl("i", variable) ~ "Repeat"))
 
+#### Make plots
+# All-in-one plot- 1 year
+filter(ts.long, time <= 365) %>% 
+  ggplot(aes(x = time, y = value, color = compartment, linetype = repeat_infection)) + 
+  geom_line()
 
+# all-in-one plot 5 year
 (ggplot(ts.long)
   + aes(x = time, y = value, color = compartment, linetype = repeat_infection)
   + geom_line()
 )
+
+# facet plot 5 year
+ggplot(ts.long, aes(x = time, y = value, color = compartment)) + geom_line() +
+  facet_wrap(~repeat_infection, nrow = 2)
 
