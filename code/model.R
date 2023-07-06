@@ -123,21 +123,52 @@ ts.long <- melt(ts, id.vars = 'time') %>%
 
 #### Make plots
 # All-in-one plot- 1 year
-filter(ts.long, time <= days(365)) %>% 
+filter(ts.long, time <= 365) %>% 
   rename(State=compartment) %>%
   rename(`Level of infection`=repeat_infection) %>%
-  mutate(Months = lubridate::dmonth(time)) %>%
-  ggplot(aes(x = Months, y = value, color = State, linetype = `Level of infection`)) + 
-  geom_line() 
-  labs(x="time (year)", y="N")
+  ggplot(aes(x = time/30, y = value, color = State, linetype = `Level of infection`)) + 
+  geom_line(size = 1.25) +
+  labs(x="Months", y="N") + 
+  scale_x_continuous(breaks = c(0, 3, 6, 9, 12)) + 
+  theme(axis.title = element_text(face="bold", size = 16), 
+        title = element_text(face = "bold", size = 18)) + 
+  ggtitle("Modeled Dynamics of Trachoma After 1 Year")
 
 # all-in-one plot 5 year
-(ggplot(ts.long)
-  + aes(x = time, y = value, color = compartment, linetype = repeat_infection)
-  + geom_line()
-)
+ts.long  %>% 
+  rename(State=compartment) %>%
+  rename(`Level of infection`=repeat_infection) %>%
+  ggplot(aes(x = time/365, y = value, color = State, linetype = `Level of infection`)) + 
+  geom_line(size = 1.25) +
+  labs(x="Years", y="N") + 
+  scale_x_continuous(breaks = seq(0, 5, 1)) + 
+  theme(axis.title = element_text(face="bold", size = 16), 
+        title = element_text(face = "bold", size = 18)) + 
+  ggtitle("Modeled Dynamics of Trachoma After 5 Years")
 
 # facet plot 5 year
-ggplot(ts.long, aes(x = time, y = value, color = compartment)) + geom_line() +
-  facet_wrap(~repeat_infection, nrow = 2)
+ts.long  %>% 
+  rename(State=compartment) %>%
+  rename(`Level of infection`=repeat_infection) %>%
+  ggplot(aes(x = time/365, y = value, color = State)) + 
+  geom_line(size = 1.25) +
+  labs(x="Years", y="N") + 
+  scale_x_continuous(breaks = seq(0, 5, 1)) + 
+  theme(axis.title = element_text(face="bold", size = 16), 
+        title = element_text(face = "bold", size = 18), 
+        strip.text.x = element_text(size = 15, face = "bold")) + 
+  ggtitle("Modeled Dynamics of Trachoma After 5 Years") +
+  facet_wrap(~`Level of infection`, nrow = 2, labeller = label_both)
 
+# Plot of I compartments only
+ts.long  %>% 
+  rename(State=compartment) %>%
+  rename(`Level of infection`=repeat_infection) %>%
+  filter(State == "Ip" | State == "It") %>%
+  ggplot(aes(x = time/365, y = value, color = State, linetype = `Level of infection`)) + 
+  geom_line(size = 1.25) +
+  labs(x="Years", y="N") + 
+  scale_x_continuous(breaks = seq(0, 5, 1)) + 
+  theme(axis.title = element_text(face="bold", size = 16), 
+        title = element_text(face = "bold", size = 18)) + 
+  ggtitle("Modeled Infectious Cases of Trachoma After 5 Years")
