@@ -34,3 +34,4 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 mmed_trachoma.Rproj
+.DS_Store
