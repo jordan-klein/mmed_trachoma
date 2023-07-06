@@ -8,10 +8,11 @@ library(deSolve)                # Load library to be used for numerical integrat
 library(tidyverse)
 library(data.table)
 library(stringr)
+library(lubridate)
 
 #S1 = susceptible 
 #Ip1 = Infectious TF/TI negative
-#It1 = Infectious TF/TI positve
+#It1 = Infectious TF/TI positive
 #D1 = No longer infectious
 #Si = Susceptible but previously infected
 #Ipi = Infectious TF/TI negative (previously infected)
@@ -61,7 +62,7 @@ for(j in 1: 100)
 }
 
 ####################################################
-## function for infectivity with repeated infections
+## function for infection clearance with repeated infections
 
 gamma =  rep (0, 100)	## rate of leaving IA (weeks)- functional form
 
@@ -76,12 +77,14 @@ for(k in 1: 100)
   gamma[k] <-  (nu0_A - nun_A )*exp(-inf_red_A*(k-1))+ nun_A ###  1/((20.7*7)/log(2)) ## 1/(7.14*7) ##	1/(36.1*7) ###
 }
 
+#year <- 365 #[days]
+
 #### Parameter values
 values <- c(b = 37.4, 
             mu = .00007, 
             beta = .076, 
             sigma = .5, 
-            alpha = 1/14, 
+            alpha = 1/(14), 
             omega1 = omega[1], 
             gamma1 = gamma[1], 
             omegai = mean(omega), 
@@ -90,10 +93,10 @@ values <- c(b = 37.4,
               )
 
 #### Time
-time.out <- seq(0, 365*5, 1)
+time.out <- seq(0, 5*365, 1)
 
 #### Population
-N0 <- 100000 
+N0 <- 118411 # 2007 pop of Wag Hemra = 426,213, WPP ethiopia 0.277821411 of pop aged 0-9
 
 pop.SIID <- c(S1 = N0/4,
               Ip1 = N0/8,
@@ -115,14 +118,18 @@ ts <- data.table(lsoda(
 
 ts.long <- melt(ts, id.vars = 'time') %>% 
   mutate(compartment = str_sub(variable, start = 1, end = -2), 
-         repeat_infection = case_when(grepl("1", variable) ~ "Naive", 
+         repeat_infection = case_when(grepl("1", variable) ~ "First", 
                                       grepl("i", variable) ~ "Repeat"))
 
 #### Make plots
 # All-in-one plot- 1 year
-filter(ts.long, time <= 365) %>% 
-  ggplot(aes(x = time, y = value, color = compartment, linetype = repeat_infection)) + 
-  geom_line()
+filter(ts.long, time <= days(365)) %>% 
+  rename(State=compartment) %>%
+  rename(`Level of infection`=repeat_infection) %>%
+  mutate(Months = lubridate::dmonth(time)) %>%
+  ggplot(aes(x = Months, y = value, color = State, linetype = `Level of infection`)) + 
+  geom_line() 
+  labs(x="time (year)", y="N")
 
 # all-in-one plot 5 year
 (ggplot(ts.long)
