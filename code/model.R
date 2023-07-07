@@ -98,13 +98,13 @@ time.out <- seq(0, 5*365, 1)
 #### Population
 N0 <- 118411 # 2007 pop of Wag Hemra = 426,213, WPP ethiopia 0.277821411 of pop aged 0-9
 
-pop.SIID <- c(S1 = N0/4,
-              Ip1 = N0/8,
-              It1 = N0/8,
+pop.SIID <- c(S1 = N0*0.9,
+              Ip1 = N0*0.1,
+              It1 = 0,
               D1 = 0, 
-              Si = N0/4, 
-              Ipi = N0/8, 
-              Iti = N0/8, 
+              Si = 0, 
+              Ipi = 0, 
+              Iti = 0, 
               Di = 0)      
 
 
@@ -128,6 +128,7 @@ filter(ts.long, time <= 365) %>%
   rename(`Level of infection`=repeat_infection) %>%
   ggplot(aes(x = time/30, y = value, color = State, linetype = `Level of infection`)) + 
   geom_line(size = 1.25) +
+  theme_bw()+
   labs(x="Months", y="N") + 
   scale_x_continuous(breaks = c(0, 3, 6, 9, 12)) + 
   theme(axis.title = element_text(face="bold", size = 16), 
@@ -140,6 +141,7 @@ ts.long  %>%
   rename(`Level of infection`=repeat_infection) %>%
   ggplot(aes(x = time/365, y = value, color = State, linetype = `Level of infection`)) + 
   geom_line(size = 1.25) +
+  theme_bw()+
   labs(x="Years", y="N") + 
   scale_x_continuous(breaks = seq(0, 5, 1)) + 
   theme(axis.title = element_text(face="bold", size = 16), 
@@ -152,13 +154,14 @@ ts.long  %>%
   rename(`Level of infection`=repeat_infection) %>%
   ggplot(aes(x = time/365, y = value, color = State)) + 
   geom_line(size = 1.25) +
+  theme_bw()+
   labs(x="Years", y="N") + 
   scale_x_continuous(breaks = seq(0, 5, 1)) + 
   theme(axis.title = element_text(face="bold", size = 16), 
         title = element_text(face = "bold", size = 18), 
         strip.text.x = element_text(size = 15, face = "bold")) + 
   ggtitle("Modeled Dynamics of Trachoma After 5 Years") +
-  facet_wrap(~`Level of infection`, nrow = 2, labeller = label_both)
+  facet_wrap(~`Level of infection`, ncol = 2, labeller = label_both)
 
 # Plot of I compartments only
 ts.long  %>% 
@@ -167,8 +170,12 @@ ts.long  %>%
   filter(State == "Ip" | State == "It") %>%
   ggplot(aes(x = time/365, y = value, color = State, linetype = `Level of infection`)) + 
   geom_line(size = 1.25) +
+  theme_bw()+                                                           
   labs(x="Years", y="N") + 
   scale_x_continuous(breaks = seq(0, 5, 1)) + 
   theme(axis.title = element_text(face="bold", size = 16), 
         title = element_text(face = "bold", size = 18)) + 
-  ggtitle("Modeled Infectious Cases of Trachoma After 5 Years")
+  ggtitle("Modeled Infectious Cases of Trachoma After 5 Years")+
+  facet_wrap(~`Level of infection`, ncol = 2, labeller = label_both)
+
+
